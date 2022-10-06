@@ -1,0 +1,77 @@
+---
+title: 'GC3: Intro to SEM'
+author: "Jimmy Zhang"
+date: "2022-10-06"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load packages}
+#install.packages("lavaan")
+library(lavaan)
+```
+
+```{r import data}
+# Read the dataset
+df <- read.csv("data/hh_sem.csv", header = FALSE)
+
+# Change the variables names
+names(df) <- c("ID", "schoolid", "W5tot6m", "W5alc6m", "W5ecig6m", "W5cig6m", 
+               "W5nic6m", "CESD1", "CESD2", "CESD3", "CESD4", "W5adhdat", 
+               "W5adhdim", "W5imp1", "W5imp2", "W5imp3", "W5imp4", "W5imp5", 
+               "W5imp6", "W5imp7", "W5imp8", "W5imp9", "SUBUSE1", "SUBUSE2", 
+               "SUBUSE3", "SUBUSE4", "W6tot6m",	"W6alc6m", "W6ecig6m" ,"W6cig6m",
+               "W6nic6m", "AR1", "W5adecig2", "W5adhkah", "AR2", "AR3",
+               "AR4", "W5admje")
+
+# Replace the NA values
+df[df == -999] <- NA
+```
+
+## Example 1: Confirmatory Factor Analysis (CFA)
+
+```{r specify the model using lavaan}
+
+model_1 <- 'impulsivity =~ W5imp1 + W5imp2 + W5imp3 +
+                           W5imp4 + W5imp5 + W5imp6 +
+                           W5imp7 + W5imp8 + W5imp9'
+
+```
+
+```{r}
+model_1_fit <- cfa(model_1, data = df)
+summary(model_1_fit, fit.measures = TRUE)
+# Standardized version
+summary(model_1_fit, standardized = TRUE)
+```
+
+# Example 2: Full SEM structure
+
+```{r}
+model_2 <- '
+            # Measurement Model
+            Impulsivity =~ W5imp1 + W5imp2 + W5imp3 +
+                           W5imp4 + W5imp5 + W5imp6 +
+                           W5imp7 + W5imp8 + W5imp9
+            Addiction =~ AR1 + AR2 + AR3 + AR4
+            Depression =~ CESD1 + CESD2 + CESD3 + CESD4
+            Substance =~ SUBUSE1 + SUBUSE2 + SUBUSE3 + SUBUSE4
+            
+            # Structural Model
+            Addiction ~ Impulsivity + Depression
+            Depression ~ Addiction
+            Substance ~ Addiction + Depression 
+            '
+```
+
+```{r}
+model_2_fit <- sem(model_2, data = df)
+summary(model_2_fit, fit.measures = TRUE)
+```
+
+
